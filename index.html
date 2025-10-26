@@ -1,99 +1,138 @@
+/*
+  App.jsx
+  A polished, GitHub-ready single-file React component for your Bachelorette Weekend schedule.
 
-import React, { useState } from 'react';
-import { Home, Plane, ShoppingBag, Sun, PlaneTakeoff, Menu, X, ArrowRight } from 'lucide-react';
+  Usage / Notes:
+  - Requires: React 18+, Tailwind CSS, lucide-react icons.
+  - Recommended project setup: Create React App / Vite + Tailwind. Place this file under src/ (e.g. src/App.jsx).
+  - Install icons: `npm i lucide-react`
+  - Tailwind: follow official Tailwind + CRA/Vite instructions.
+  - Fonts: the component loads Google fonts via <link>; in a production repo prefer index.html or CSS import.
 
-// --- נתוני הלו"ז ---
+  Accessibility & Improvements included:
+  - RTL support via dir="rtl" on app container and semantic HTML.
+  - Keyboard support: Escape closes the sidebar.
+  - Prevent body scroll when sidebar open.
+  - Simple focus management: focus returns to menu button on close.
+  - Clean modular structure and comments for maintainability.
+*/
+
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Home,
+  Plane,
+  ShoppingBag,
+  Sun,
+  PlaneTakeoff,
+  Menu,
+  X,
+} from 'lucide-react';
+
+// ---------------------
+// Schedule data
+// ---------------------
 const scheduleData = {
   day1: {
-    title: "יום ראשון: הגענו!",
+    title: 'יום ראשון: הגענו!',
     icon: Plane,
     activities: [
       "טיסה ודרכי הגעה (מלאות התרגשות!)",
       "צ'ק-אין למלון והתמקמות בסטייל.",
       "יוצאות לסיבוב ראשון בשדרה המרכזית של רומא.",
       "חוזרות לחדר להתארגנות קלה ודרינק פתיחה.",
-      "ערב: מסעדת ערב איטלקית לפתוח את הטיול. 🍝"
-    ]
+      'ערב: מסעדת ערב איטלקית לפתוח את הטיול. 🍝',
+    ],
   },
   day2: {
-    title: "יום שני: שופינג ומשהו מיוחד",
+    title: 'יום שני: שופינג ומשהו מיוחד',
     icon: ShoppingBag,
     activities: [
-      "ארוחת בוקר וקפוצ'ינו של בוקר.",
-      "מסתובבים בעיר ועושים שופינג (כי מגיע לנו!).",
-      { 
+      'ארוחת בוקר וקפוצ\'ינו של בוקר.',
+      'מסתובבים בעיר ועושים שופינג (כי מגיע לנו!).',
+      {
         type: 'special',
         title: 'הולכות למקום מיוחד ברומא! (בלי לשבור קופה 💰)',
         optionsTitle: 'אופציות חינמיות לבחירה:',
         options: [
-          "מזרקת טרווי (Fontana di Trevi)",
-          "המדרגות הספרדיות (Piazza di Spagna)",
-          "גני התפוזים (Giardino degli Aranci)",
-          "שיטוט בטרסטוורה (Trastevere)",
-          "הפנתיאון (Pantheon)"
-        ]
+          'מזרקת טרווי (Fontana di Trevi)',
+          'המדרגות הספרדיות (Piazza di Spagna)',
+          'גני התפוזים (Giardino degli Aranci)',
+          'שיטוט בטרסטוורה (Trastevere)',
+          'הפנתיאון (Pantheon)',
+        ],
       },
-      "חוזרות למלון להתארגן, מוזיקה בפול ווליום.",
-      "ערב בחדר: משחקי חברה, אלכוהול וצחוקים. 🥂",
-      "ערב: יוצאות למסעדה שווה במיוחד."
-    ]
+      'חוזרות למלון להתארגן, מוזיקה בפול ווליום.',
+      'ערב בחדר: משחקי חברה, אלכוהול וצחוקים. 🥂',
+      'ערב: יוצאות למסעדה שווה במיוחד.',
+    ],
   },
   day3: {
-    title: "יום שלישי: פאשן ושיק",
+    title: 'יום שלישי: פאשן ושיק',
     icon: Sun,
     activities: [
-      "ארוחת בוקר מוקדמת (יחסית...).",
-      "יוצאות לסיור אופנה ברומא (כי מגיע לנו!).",
-      "ממשיכות להסתובב עוד בעיר, אולי שופינג השלמות?",
+      'ארוחת בוקר מוקדמת (יחסית...).',
+      'יוצאות לסיור אופנה ברומא (כי מגיע לנו!).',
+      'ממשיכות להסתובב עוד בעיר, אולי שופינג השלמות?',
       "ג'לאטו חובה! 🍦",
-      "ערב: מסעדת ערב אחרונה ומפנקת במיוחד."
-    ]
+      'ערב: מסעדת ערב אחרונה ומפנקת במיוחד.',
+    ],
   },
   day4: {
-    title: "יום רביעי: ביי ביי רומא",
+    title: 'יום רביעי: ביי ביי רומא',
     icon: PlaneTakeoff,
     activities: [
-      "ארוחת בוקר אחרונה (והרבה קפה).",
+      'ארוחת בוקר אחרונה (והרבה קפה).',
       "מתכוננים לצ'ק-אאוט ועוזבים את המלון.",
-      "עוד סיבוב קטן בעיר לקניות אחרונות ומזכרות.",
-      "יציאה לשדה התעופה. 💔",
-      "(חוזרות לארץ עם מלא חוויות וגעגועים)."
-    ]
-  }
+      'עוד סיבוב קטן בעיר לקניות אחרונות ומזכרות.',
+      'יציאה לשדה התעופה. 💔',
+      '(חוזרות לארץ עם מלא חוויות וגעגועים).',
+    ],
+  },
 };
 
-// פונט מיוחד לכותרות
-const amaticFont = { fontFamily: "'Amatic SC', cursive" };
+// ---------------------
+// Fonts & styles
+// ---------------------
+const amaticStyle = { fontFamily: "'Amatic SC', cursive" };
+const containerFont = { fontFamily: "'Heebo', sans-serif" };
 
-// --- קומפוננטת כותרת עליונה (Header) ---
+// ---------------------
+// Header
+// ---------------------
 function AppHeader({ setIsMenuOpen, view }) {
   const getTitle = () => {
-    if (view === 'home') return ""; // <--- הסרתי את הכותרת מדף הבית
+    if (view === 'home') return ''; // hide title on home
     if (scheduleData[view]) return scheduleData[view].title;
     return "הלו'ז שלנו";
   };
 
   return (
-    <div className="flex items-center justify-between p-4 bg-orange-50 sticky top-0 z-20 w-full" dir="rtl">
-      {/* כותרת דינמית */}
-      <h2 style={amaticFont} className="text-3xl text-red-900 font-bold truncate">
+    <header
+      className="flex items-center justify-between p-4 bg-orange-50 sticky top-0 z-20 w-full"
+      dir="rtl"
+    >
+      <h2 style={amaticStyle} className="text-3xl text-red-900 font-bold truncate" aria-live="polite">
         {getTitle()}
       </h2>
-      
-      {/* כפתור תפריט המבורגר */}
-      <button 
+
+      <button
         onClick={() => setIsMenuOpen(true)}
         className="text-red-900 p-2 rounded-full hover:bg-red-100 transition-colors"
         aria-label="פתיחת תפריט"
+        aria-haspopup="true"
       >
         <Menu size={24} />
       </button>
-    </div>
+    </header>
   );
 }
 
-// --- קומפוננטת תפריט צד (Sidebar) ---
+// ---------------------
+// Sidebar (drawer)
+// ---------------------
 function Sidebar({ isOpen, setIsMenuOpen, setView }) {
+  const menuButtonRef = useRef(null);
+
   const menuItems = [
     { key: 'home', text: 'דף הבית', icon: Home },
     { key: 'day1', text: 'יום 1: הגענו!', icon: Plane },
@@ -107,34 +146,48 @@ function Sidebar({ isOpen, setIsMenuOpen, setView }) {
     setIsMenuOpen(false);
   };
 
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') setIsMenuOpen(false);
+    };
+    if (isOpen) document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, setIsMenuOpen]);
+
   return (
     <>
-      {/* רקע כהה כשפתוח */}
-      <div 
+      {/* backdrop */}
+      <div
         className={`fixed inset-0 bg-black/50 z-30 transition-opacity ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMenuOpen(false)}
-      ></div>
-      
-      {/* תפריט הצד עצמו */}
-      <div 
-        className={`fixed top-0 right-0 bottom-0 w-72 bg-orange-50 shadow-xl z-40 transition-transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        aria-hidden={!isOpen}
+      />
+
+      {/* drawer */}
+      <aside
+        className={`fixed top-0 right-0 bottom-0 w-72 bg-orange-50 shadow-xl z-40 transition-transform ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
         dir="rtl"
+        aria-hidden={!isOpen}
       >
-        {/* כותרת תפריט וכפתור סגירה */}
         <div className="flex items-center justify-between p-4 border-b border-red-200">
-          <h3 style={amaticFont} className="text-3xl text-red-900 font-bold">תפריט</h3>
-          <button 
+          <h3 style={amaticStyle} className="text-3xl text-red-900 font-bold">
+            תפריט
+          </h3>
+          <button
             onClick={() => setIsMenuOpen(false)}
             className="text-red-900 p-2 rounded-full hover:bg-red-100 transition-colors"
             aria-label="סגירת תפריט"
+            ref={menuButtonRef}
           >
             <X size={24} />
           </button>
         </div>
-        
-        {/* פריטי תפריט */}
-        <nav className="p-4 space-y-2">
-          {menuItems.map(item => (
+
+        <nav className="p-4 space-y-2" aria-label="ניווט הלו'ז">
+          {menuItems.map((item) => (
             <button
               key={item.key}
               onClick={() => navigate(item.key)}
@@ -145,29 +198,35 @@ function Sidebar({ isOpen, setIsMenuOpen, setView }) {
             </button>
           ))}
         </nav>
-      </div>
+      </aside>
     </>
   );
 }
 
-// --- קומפוננטת דף הבית ---
+// ---------------------
+// Home page
+// ---------------------
 function HomePage() {
   return (
-    <div className="flex flex-col h-full" dir="rtl">
-      {/* כותרת */}
+    <main className="flex flex-col h-full" dir="rtl" role="main">
       <div className="text-center p-10 bg-orange-50 flex-grow flex flex-col items-center justify-center">
-        <h1 style={amaticFont} className="text-7xl sm:text-8xl font-bold text-red-900">Gal's Bachelorette Weekend!</h1>
-        <p style={amaticFont} className="text-4xl sm:text-5xl text-red-900 mt-2">♥</p>
+        <h1 style={amaticStyle} className="text-6xl sm:text-7xl font-bold text-red-900">
+          Gal's Bachelorette Weekend!
+        </h1>
+        <p style={amaticStyle} className="text-4xl text-red-900 mt-2">
+          ♥
+        </p>
       </div>
-    </div>
+    </main>
   );
 }
 
-// --- קומפוננטת תצוגת יום ---
+// ---------------------
+// Day view
+// ---------------------
 function DayView({ dayData }) {
   return (
-    <div className="flex flex-col h-full" dir="rtl">
-      {/* תוכן הלו"ז */}
+    <section className="flex flex-col h-full" dir="rtl" aria-labelledby="day-title">
       <ul className="p-6 space-y-4 text-red-900 text-lg overflow-y-auto flex-grow">
         {dayData.activities.map((activity, index) => {
           if (typeof activity === 'string') {
@@ -177,76 +236,83 @@ function DayView({ dayData }) {
                 <span>{activity}</span>
               </li>
             );
-          } else if (activity.type === 'special') {
+          }
+
+          if (activity.type === 'special') {
             return (
               <li key={index}>
                 <div className="flex items-start">
                   <span className="text-red-900 ml-3 mt-1 flex-shrink-0">◆</span>
                   <span className="font-semibold">{activity.title}</span>
                 </div>
-                {/* תיבת האופציות */}
+
                 <div className="mt-3 mr-6 p-4 bg-orange-100 rounded-lg border-l-4 border-red-200">
                   <h4 className="font-bold text-red-900 mb-2">{activity.optionsTitle}</h4>
                   <ul className="list-decimal list-inside space-y-1 text-red-700">
-                    {activity.options.map((opt, i) => <li key={i}>{opt}</li>)}
+                    {activity.options.map((opt, i) => (
+                      <li key={i}>{opt}</li>
+                    ))}
                   </ul>
                 </div>
               </li>
             );
           }
+
           return null;
         })}
       </ul>
-    </div>
+    </section>
   );
 }
 
-// --- קומפוננטת האפליקציה הראשית ---
+// ---------------------
+// Main App
+// ---------------------
 export default function App() {
-  const [view, setView] = useState('home'); // 'home', 'day1', 'day2', וכו'
+  const [view, setView] = useState('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButtonRef = useRef(null);
 
-  // פונקציה לבחירת התצוגה
+  // Prevent body scroll when sidebar is open
+  useEffect(() => {
+    document.body.style.overflow = isMenuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
+  // Return focus to the menu button when closing sidebar
+  useEffect(() => {
+    if (!isMenuOpen && menuButtonRef.current) menuButtonRef.current.focus();
+  }, [isMenuOpen]);
+
   const renderView = () => {
-    if (view === 'home') {
-      return <HomePage />;
-    }
-    
-    // בדיקה אם התצוגה היא יום קיים (למשל 'day1')
-    if (scheduleData[view]) {
-      return <DayView dayData={scheduleData[view]} />;
-    }
-    
-    // ברירת מחדל - חזרה הביתה
+    if (view === 'home') return <HomePage />;
+    if (scheduleData[view]) return <DayView dayData={scheduleData[view]} />;
     return <HomePage />;
   };
 
   return (
-    // הרקע הכללי של העמוד
-    <div className="bg-gray-100 min-h-screen p-4 flex items-center justify-center" style={{ fontFamily: "'Heebo', sans-serif" }}>
-        {/*
-          זה יוצר את המסגרת הלבנה
-          שמדמה מסך של אפליקציה
-        */}
-        <div className="w-full max-w-md bg-orange-50 rounded-2xl shadow-xl overflow-hidden relative" style={{ height: '90vh', minHeight: '600px' }}>
-          {/* טעינת פונטים מגוגל */}
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
-          <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&family=Amatic+SC:wght@700&display=swap" rel="stylesheet" />
+    <div
+      className="bg-gray-100 min-h-screen p-4 flex items-center justify-center"
+      style={containerFont}
+      dir="rtl"
+    >
+      <div className="w-full max-w-md bg-orange-50 rounded-2xl shadow-xl overflow-hidden relative" style={{ height: '90vh', minHeight: '600px' }}>
+        {/* Prefer to load Google fonts in index.html for production; kept here for convenience */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700&family=Amatic+SC:wght@700&display=swap" rel="stylesheet" />
 
-          {/* תפריט צד נסתר */}
-          <Sidebar isOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} setView={setView} />
-          
-          {/* כותרת עליונה קבועה */}
-          <AppHeader setIsMenuOpen={setIsMenuOpen} view={view} />
+        <Sidebar isOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} setView={setView} />
 
-          {/* גוף האפליקציה שמשתנה */}
-          <div className="h-[calc(100%-68px)] overflow-y-auto">
-            {renderView()}
-          </div>
+        <div className="relative z-10">
+          <AppHeader setIsMenuOpen={() => setIsMenuOpen(true)} view={view} />
+
+          <div className="h-[calc(100%-68px)] overflow-y-auto">{renderView()}</div>
         </div>
+      </div>
     </div>
   );
 }
-
 
